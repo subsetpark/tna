@@ -1,5 +1,4 @@
 -module(parser).
--compile([export_all]).
 %%====================================================================
 %%
 %% @author Zach Smith
@@ -68,7 +67,7 @@ make_pairs(Term, Pairs) ->
 % {noreply,NewState,hibernate}
 % {stop,Reason,Reply,NewState}
 % {stop,Reason,NewState}
-handle_call({parse, S}, From, Trie) ->
+handle_call({parse, S}, _, Trie) ->
     Tokens = string:tokens(S, " ,."),
     Reply = [parse_token(Token, Trie) || Token <- Tokens],
     {reply, Reply, Trie}.

@@ -31,12 +31,25 @@
  [
   nt
  ]}.
- {suffix,
-  [
-   tion,
-   ion,
-   ness,
-   s,
-   ous,
-   ious
-  ]}.
+{suffix,
+ [
+  tion,
+  ion,
+  ness,
+  s,
+  ous,
+  ious
+ ]}.
+{prefix,
+ [
+  ad,
+  im,
+  in,
+  con,
+  com,
+  sub,
+  ob,
+  de,
+  be,
+  dis
+ ]}.
