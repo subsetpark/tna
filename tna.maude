@@ -1,0 +1,32 @@
+mod TNA is
+
+    sorts Glyph Word Prefix Super Sub Space Letter .
+    subsorts Space Word Prefix Super Sub Letter < Glyph .
+
+    op __ : Glyph Glyph -> Glyph [prec 1 gather (E e)] .
+    op _|_ : Glyph Glyph -> Glyph [prec 0 gather (E e)] .
+    op end : -> Space [ctor] . 
+
+    vars G1 G2 : Glyph .
+    eq G1 G2 = G1 | G2 .
+
+    ops A B C D E F G H I J K L M N O P Q R S T U V W X Y Z : -> Letter [ctor] .
+    ops -Er LL : -> Glyph [ctor] .
+    ops -Y -Ly -Ed -Al -Ial -Le -Ic -Ical -Ically : -> Sub [ctor] .
+    ops OUT ABOUT WITH : -> Word [ctor] .
+
+    rl W I T H => WITH .
+    rl O U T => OUT . 
+    rl A B O U T => ABOUT .
+    rl L L => LL .
+    rl Y end => -Y .
+    rl L -Y => -Ly .
+    rl L E end => -Le .
+    rl A L end => -Al .
+    rl I -Al => -Ial .
+    rl I C end => -Ic .
+    rl I C -Al => -Ical .
+    rl -Ical -Ly => -Ically .
+
+
+endm

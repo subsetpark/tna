@@ -1,1 +1,5 @@
-""
+Foo = "1", "3", {"3"};
+Bar = Foo | ["yes"], natural number;
+EPlus.  Exp ::= Exp "+" Num ;
+Enum.   Exp ::= Num ;
+NOne.   Num ::= "1" ;
