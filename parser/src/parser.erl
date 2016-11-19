@@ -45,7 +45,8 @@ init(_Args) ->
     Trie = trie:new(AllPairs),
     {ok, Trie}.
 
-make_pattern(suffix, Name) -> "*" ++ Name;
+make_pattern(suffix, Name) -> [$*|Name];
+make_pattern(prefix, Name) -> Name ++ "*";
 make_pattern(_, Name) -> Name.
 
 make_pairs(Term, Pairs) ->
@@ -68,23 +69,23 @@ make_pairs(Term, Pairs) ->
 % {stop,Reason,Reply,NewState}
 % {stop,Reason,NewState}
 handle_call({parse, S}, _, Trie) ->
-    Tokens = string:tokens(S, " ,."),
+    Tokens = string:tokens(string:to_lower(S), " ,."),
     Reply = [parse_token(Token, Trie) || Token <- Tokens],
     {reply, Reply, Trie}.
 
 parse_token(Token, Trie) -> parse_token_parts(Token, [{0, token, Token}], [], Trie).
-parse_token_parts(_, [{_, token, Token}=FirstPart|Rest], Acc, Trie) ->
+parse_token_parts(_, [{N, token, Token}=FirstPart|Rest], Acc, Trie) ->
     {Rest2, Acc2} = case catch trie:find_match(Token, Trie) of
         {ok, Key, {Glyph, Type, _}} ->
-                      NewNode = {0, Type, Glyph},
+                      NewNode = {N, Type, Glyph},
                       case trie:is_pattern(Key) of
                           true ->
                               {[Remainder], Suffix} = trie:pattern_parse(Key, Token, with_suffix),
                               % This is a hack.
                               {SortGlyph, SortRem} = case Suffix of
                                                         % We know the glyph is a prefix; sort it first.
-                                                        [] -> {0, 1};
-                                                        _ -> {1, 0}
+                                                        [] -> {N, N+1};
+                                                        _ -> {N+1, N}
                                                     end,
                               {[{SortRem, token, Remainder}|Rest],
                                [setelement(1, NewNode, SortGlyph)|Acc]};

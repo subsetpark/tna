@@ -1,3 +1,4 @@
+{init, [s]}.
 {word, 
  [
   the,
@@ -36,7 +37,6 @@
   tion,
   ion,
   ness,
-  s,
   ous,
   ious
  ]}.
@@ -52,4 +52,10 @@
   de,
   be,
   dis
+ ]}.
+{inter,
+ [
+  er,
+  ch,
+  sh
  ]}.
