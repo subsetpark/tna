@@ -1,8 +1,7 @@
--module(parser).
 %%====================================================================
 %%
 %% @author Zach Smith <zd@zdsmith.com>
-%% @copyright CC Attribution - 2013
+%% @copyright CC Attribution - 2016
 %%
 %% @doc This module implements a parser for the New Abbreviations. The purpose
 %% is to transform English text into a structured representation of a series of
@@ -12,6 +11,7 @@
 %% course, but to provide a reference for how any text should be abbreviated.
 %%
 %%====================================================================
+-module(parser).
 -behaviour(gen_server).
 
 % interface calls
@@ -40,7 +40,6 @@ start() ->
 stop() ->
     gen_server:cast(?MODULE, shutdown).
 
-parse(S) -> gen_server:call(?MODULE, {parse, S}).
 %%====================================================================
 %% types
 %%====================================================================
@@ -176,6 +175,12 @@ abbreviate(Headword, [FirstPart|Rest], Acc, Trie) ->
     % pass.
     abbreviate(Headword, Rest, [FirstPart|Acc], Trie);
 abbreviate(_, [], Acc, _) -> lists:sort(Acc).
+
+%% @doc Parse a string of English text into a sequence of <em>Abbreviation
+%% Nodes</em>, structured data representing the application of abbreviation
+%% rules onto the text.
+-spec parse(string()) -> [abbreviated_token()].
+parse(S) -> gen_server:call(?MODULE, {parse, S}).
 
 %% Asynchronous, possible return values
 % {noreply,NewState}
