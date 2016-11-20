@@ -11,20 +11,18 @@
 
 <h1>Module parser</h1>
 <ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>This module implements a parser for the New Abbreviations.
-<p>Copyright © CC Attribution - 2013
+<p>Copyright © CC Attribution - 2016
  </p>
 
 <p><b>Behaviours:</b> <a href="gen_server.html"><tt>gen_server</tt></a>.</p>
 <p><b>Authors:</b> Zach Smith (<a href="mailto:zd@zdsmith.com"><tt>zd@zdsmith.com</tt></a>).</p>
 
-<h2><a name="description">Description</a></h2><p>This module implements a parser for the New Abbreviations. The purpose
+<h2><a name="description">Description</a></h2>This module implements a parser for the New Abbreviations. The purpose
   is to transform English text into a structured representation of a series of
-  <em>glyphs</em>, which are the abbreviations themselves. Its intention is,  
-insofar as the abbreviations are regular and systematic, to serve as a  
-"reference implementation"; not to describe how they are rendered, of  
-course, but to provide a reference for how any text should be abbreviated.</p>
- 
- ====================================================================
+  <em>glyphs</em>, which are the abbreviations themselves. Its intention is,
+  insofar as the abbreviations are regular and systematic, to serve as a
+  "reference implementation"; not to describe how they are rendered, of
+  course, but to provide a reference for how any text should be abbreviated.
 <h2><a name="types">Data Types</a></h2>
 
 <h3 class="typedecl"><a name="type-abbreviated_token">abbreviated_token()</a></h3>
@@ -35,49 +33,28 @@ course, but to provide a reference for how any text should be abbreviated.</p>
 <p><tt>abbreviation_type() = word | prefix | suffix | suffix_transform | voc | inter</tt></p>
 
 
+<h3 class="typedecl"><a name="type-init_arg">init_arg()</a></h3>
+<p><tt>init_arg() = ignore | {ok, term()} | {stop, term()} | {ok, term(), hibernate | infinity | non_neg_integer()}</tt></p>
+
+
 <h3 class="typedecl"><a name="type-local_abbreviation">local_abbreviation()</a></h3>
 <p><tt>local_abbreviation() = {TokenIndex::integer(), <a href="#type-abbreviation_type">abbreviation_type()</a> | token, atom() | string()}</tt></p>
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
 <tr><td valign="top"><a href="#parse-1">parse/1</a></td><td>Parse a string of English text into a sequence of <em>Abbreviation
   Nodes</em>, structured data representing the application of abbreviation
   rules onto the text.</td></tr>
 <tr><td valign="top"><a href="#start-0">start/0</a></td><td></td></tr>
 <tr><td valign="top"><a href="#stop-0">stop/0</a></td><td></td></tr>
-<tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td></td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
-<h3 class="function"><a name="code_change-3">code_change/3</a></h3>
-<div class="spec">
-<p><tt>code_change(OldVersion, Server, Extra) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="handle_call-3">handle_call/3</a></h3>
-<div class="spec">
-<p><tt>handle_call(X1, X2, Tries) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="handle_cast-2">handle_cast/2</a></h3>
-<div class="spec">
-<p><tt>handle_cast(X1, State) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="handle_info-2">handle_info/2</a></h3>
-<div class="spec">
-<p><tt>handle_info(Message, Server) -&gt; any()</tt></p>
-</div>
-
 <h3 class="function"><a name="init-1">init/1</a></h3>
 <div class="spec">
-<p><tt>init(Args) -&gt; any()</tt></p>
+<p><tt>init(X1::<a href="#type-init_arg">init_arg()</a>) -&gt; {ok, [<a href="/Users/zax/annex/projects/new_abbreviations/grammar/parser/_build/default/lib/trie/doc/trie.html#type-trie">trie:trie()</a>]}</tt><br></p>
 </div>
 
 <h3 class="function"><a name="parse-1">parse/1</a></h3>
@@ -96,14 +73,9 @@ course, but to provide a reference for how any text should be abbreviated.</p>
 <div class="spec">
 <p><tt>stop() -&gt; any()</tt></p>
 </div>
-
-<h3 class="function"><a name="terminate-2">terminate/2</a></h3>
-<div class="spec">
-<p><tt>terminate(Reason, Server) -&gt; any()</tt></p>
-</div>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 19 2016, 22:32:07.</i></p>
+<p><i>Generated by EDoc, Nov 19 2016, 22:43:36.</i></p>
 </body>
 </html>

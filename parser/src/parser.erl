@@ -9,7 +9,7 @@
 %% insofar as the abbreviations are regular and systematic, to serve as a
 %% "reference implementation"; not to describe how they are rendered, of
 %% course, but to provide a reference for how any text should be abbreviated.
-%%
+%% @end
 %%====================================================================
 -module(parser).
 -behaviour(gen_server).
@@ -51,7 +51,10 @@ stop() ->
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
-init(_Args) ->
+-type init_arg() :: 'ignore' | {'ok', _} | {'stop', _}
+                  | {'ok', _, 'hibernate' | 'infinity' | non_neg_integer()}.
+-spec init(init_arg()) -> {ok, [trie:trie()]}.
+init(_) ->
     process_flag(trap_exit, true),
     {ok, TermList} = file:consult(code:priv_dir(parser) ++ "/tna.dict"),
     Categorized = lists:foldl(fun categorize/2, {[], [], []}, TermList),
@@ -113,6 +116,7 @@ make_pairs(Abbreviations, Pairs) ->
 % {noreply,NewState,hibernate}
 % {stop,Reason,Reply,NewState}
 % {stop,Reason,NewState}
+%% @private
 handle_call({parse, S}, _, Tries) ->
     Tokens = string:tokens(string:to_lower(S), " ,."),
     Reply = [parse_token(Token, Tries) || Token <- Tokens],
@@ -121,13 +125,12 @@ handle_call({parse, S}, _, Tries) ->
 %% @doc The main entrypoint for parsing. Since every word can be assumed to be
 %% abbreviated independently of the words around it, the parsing logic can be
 %% seen as applying parse_token/2 to every token in the stream.
--type trie() :: any().
 -type local_abbreviation() :: {TokenIndex::integer(),
                                abbreviation_type() | token,
                                atom() | string()}.
 -type abbreviated_token() :: [local_abbreviation()].
 -type abnode() :: {string(), abbreviated_token()}.
--spec parse_token(string(), [trie()]) -> abnode().
+-spec parse_token(string(), [trie:trie()]) -> abnode().
 parse_token(Token, Tries) ->
     Abbreviated = lists:foldl(fun (Trie, T) ->
                                       abbreviate(Token, T, [], Trie)
@@ -139,7 +142,7 @@ parse_token(Token, Tries) ->
 %% @doc Match into the trie on a token. If the match is a pattern with
 %% remainder, recurse until all remainders have been matched or marked as seen.
 -spec abbreviate(
-        string(), [local_abbreviation()], [local_abbreviation()], trie()
+        string(), [local_abbreviation()], [local_abbreviation()], trie:trie()
        ) -> abbreviated_token().
 abbreviate(Headword, [{_, token, Token}=FirstPart|Rest], Acc, Trie) ->
     {Rest2, Acc2} = case catch trie:find_match(Token, Trie) of
@@ -179,7 +182,7 @@ abbreviate(_, [], Acc, _) -> lists:sort(Acc).
 %% @doc Parse a string of English text into a sequence of <em>Abbreviation
 %% Nodes</em>, structured data representing the application of abbreviation
 %% rules onto the text.
--spec parse(string()) -> [abbreviated_token()].
+-spec parse(string()) -> [abnode()].
 parse(S) -> gen_server:call(?MODULE, {parse, S}).
 
 %% Asynchronous, possible return values
@@ -188,8 +191,10 @@ parse(S) -> gen_server:call(?MODULE, {parse, S}).
 % {noreply,NewState,hibernate}
 % {stop,Reason,NewState}
 %% normal termination clause
+%% @private
 handle_cast(shutdown, State) -> {stop, normal, State};
 %% generic async handler
+%% @private
 handle_cast(_, State) -> {noreply, State}.
 
 %% Informative calls
@@ -197,10 +202,13 @@ handle_cast(_, State) -> {noreply, State}.
 % {noreply,NewState,Timeout}
 % {noreply,NewState,hibernate}
 % {stop,Reason,NewState}
+%% @private
 handle_info(_Message, Server) -> {noreply, Server}.
 
 %% Server termination
+%% @private
 terminate(_Reason, _Server) -> ok.
 
 %% Code change
+%% @private
 code_change(_OldVersion, Server, _Extra) -> {ok, Server}.
