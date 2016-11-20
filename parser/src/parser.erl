@@ -25,49 +25,84 @@
          terminate/2,
          code_change/3]).
 -ifndef(PRINT).
--define(PRINT(Var), io:format("DEBUG: ~p:~p - ~p~n~n ~p~n~n", [?MODULE, ?LINE, ??Var, Var])).
+-define(PRINT(Var),
+        io:format("DEBUG: ~p:~p - ~p~n~n ~p~n~n",
+                  [?MODULE, ?LINE, ??Var, Var])).
 -endif.
 %%====================================================================
 %% Server interface
 %%====================================================================
 %% Booting server (and linking to it)
 start() ->
-    io:format("Starting~n"),
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% Stopping server asynchronously
 stop() ->
-    io:format("Stopping~n"),
     gen_server:cast(?MODULE, shutdown).
 
 parse(S) -> gen_server:call(?MODULE, {parse, S}).
 %%====================================================================
+%% types
+%%====================================================================
+-type abbreviation_type() :: word | prefix | suffix | suffix_transform
+                           | voc | inter.
+-type abbreviation_value() :: atom().
+-type abbreviation() :: {abbreviation_type(), abbreviation_value()}.
+
+%%====================================================================
 %% gen_server callbacks
 %%====================================================================
 init(_Args) ->
-    io:format("Initializing~n"),
     process_flag(trap_exit, true),
     {ok, TermList} = file:consult(code:priv_dir(parser) ++ "/tna.dict"),
-    TransformTerm={suffix_transform, _} = lists:keyfind(suffix_transform, 1, TermList),
-    TransformPairs = make_pairs(TransformTerm, []),
-    TransformTrie = trie:new(TransformPairs),
-    AllPairs = lists:foldl(fun make_pairs/2, [], TermList),
-    Trie = trie:new(AllPairs),
-    {ok, [TransformTrie, Trie]}.
+    Categorized = lists:foldl(fun categorize/2, {[], [], []}, TermList),
+    MakeTrie = fun (TypedWords) ->
+                       Pairs = make_pairs(TypedWords, []),
+                       trie:new(Pairs)
+               end,
+    Tries = [MakeTrie(TypedWords) || TypedWords <- tuple_to_list(Categorized)],
+    {ok, Tries}.
 
-make_pattern(suffix_transform, Name) -> [$*|Name];
-make_pattern(suffix, Name) -> [$*|Name];
-make_pattern(prefix, Name) -> Name ++ "*";
-make_pattern(_, Name) -> Name.
-
-make_pairs(Term, Pairs) ->
-    {Type, Glyphs} = Term,
+%% @doc Sort abbreviations into stages of application.
+-type stages() :: {[abbreviation()], [abbreviation()], [abbreviation()]}.
+-spec categorize({abbreviation_type(), [abbreviation_value()]},
+                 stages()) -> stages().
+categorize({Type, Values}, Acc={_, _, _}) ->
     Prec = case Type of
-               suffix -> 0;
-               word -> 1;
-               _ -> 2
+               suffix_transform -> 1;
+               word -> 2;
+               suffix -> 2;
+               prefix -> 3;
+               _ -> 3
            end,
-    NewPairs = [{make_pattern(Type, atom_to_list(Name)), {Name, Type, Prec}}|| Name <- Glyphs],
+    Abbreviations = [{Type, Value} || Value <- Values],
+    setelement(Prec, Acc, element(Prec, Acc) ++ Abbreviations).
+
+%% @doc Generate pairs of search patterns and abbreviations for populating
+%% tries.
+-type trie_entry() :: {string(), abbreviation()}.
+-spec make_trie_entries(abbreviation()) -> [trie_entry()].
+make_trie_entries(Abbreviation={Type, Name}) ->
+    String = atom_to_list(Name),
+    Patterns = case Type of
+                   suffix_transform ->
+                       [[$*|String]];
+                   suffix ->
+                       [[$*|String]];
+                   prefix ->
+                       [String ++ "*"];
+                   inter ->
+                       ["*" ++ String, "*" ++ String ++ "*", String ++ "*"];
+                   voc ->
+                       ["*" ++ String, "*" ++ String ++ "*"];
+                   _ -> [String]
+               end,
+    [{Pattern, Abbreviation} || Pattern <- Patterns].
+
+-spec make_pairs([abbreviation()], [trie_entry()]) -> [trie_entry()].
+make_pairs(Abbreviations, Pairs) ->
+    NewPairs = lists:flatten([make_trie_entries(Abbreviation)
+                              || Abbreviation <- Abbreviations]),
     NewPairs ++ Pairs.
 
 %% Synchronous, possible return values
@@ -87,73 +122,80 @@ handle_call({parse, S}, _, Tries) ->
 %% @doc The main entrypoint for parsing. Since every word can be assumed to be
 %% abbreviated independently of the words around it, the parsing logic can be
 %% seen as applying parse_token/2 to every token in the stream.
+-type trie() :: any().
+-type local_abbreviation() :: {TokenIndex::integer(),
+                               abbreviation_type() | token,
+                               atom() | string()}.
+-type abbreviated_token() :: [local_abbreviation()].
+-type abnode() :: {string(), abbreviated_token()}.
+-spec parse_token(string(), [trie()]) -> abnode().
 parse_token(Token, Tries) ->
-    Token1 = lists:foldl(fun (Trie, T) -> parse_token_parts(T, [], Trie) end,
-                         [{0, token, Token}],
-                         Tries),
-    {Token, Token1}.
+    Abbreviated = lists:foldl(fun (Trie, T) ->
+                                      abbreviate(Token, T, [], Trie)
+                              end,
+                              [{0, token, Token}],
+                              Tries),
+    {Token, Abbreviated}.
+
 %% @doc Match into the trie on a token. If the match is a pattern with
 %% remainder, recurse until all remainders have been matched or marked as seen.
-parse_token_parts([{_, token, Token}=FirstPart|Rest], Acc, Trie) ->
+-spec abbreviate(
+        string(), [local_abbreviation()], [local_abbreviation()], trie()
+       ) -> abbreviated_token().
+abbreviate(Headword, [{_, token, Token}=FirstPart|Rest], Acc, Trie) ->
     {Rest2, Acc2} = case catch trie:find_match(Token, Trie) of
-                        {ok, Key, {Glyph, Type, _}} ->
+                        {ok, Key, {Type, Value}} ->
+                            F = fun (Segment, {Unparsed, Parsed}) ->
+                                        case Segment of
+                                            {exact, Match} ->
+                                                Index = string:str(Headword, Match),
+                                                Parsed2 = [{Index, Type, Value}|Parsed],
+                                                {Unparsed, Parsed2};
+                                            Remainder ->
+                                                Index = string:str(Headword, Remainder),
+                                                Unparsed2 = [{Index, token, Remainder}|Unparsed],
+                                                {Unparsed2, Parsed}
+                                        end
+                                end,
+
                             case trie:is_pattern(Key) of
                                 true ->
                                     Segments = trie:pattern_parse(Key, Token, expanded),
-                                    SegmentProcessor = fun (Segment, {Unparsed, Parsed}) ->
-                                                               case Segment of
-                                                                   {exact, Match} ->
-                                                                       Index = string:str(Token, Match),
-                                                                       Parsed2 = [{Index, Type, Glyph}|Parsed],
-                                                                       {Unparsed, Parsed2};
-                                                                   Remainder ->
-                                                                       Index = string:str(Token, Remainder),
-                                                                       Unparsed2 = [{Index, token, Remainder}|Unparsed],
-                                                                       {Unparsed2, Parsed}
-                                                               end
-                                                       end,
-                                    {Unparsed, Parsed} = lists:foldl(SegmentProcessor, {[],[]}, Segments),
+                                    {Unparsed, Parsed} = lists:foldl(F, {[], []}, Segments),
                                     {Unparsed ++ Rest, Parsed ++ Acc};
                                 _ ->
                                     Index = string:str(Token, Key),
-                                    NewNode = {Index, Type, Glyph},
+                                    NewNode = {Index, Type, Value},
                                     {Rest, [NewNode|Acc]}
                             end;
                         _ -> {Rest, [FirstPart|Acc]}
                     end,
-    parse_token_parts(Rest2, Acc2, Trie);
-parse_token_parts([FirstPart|Rest], Acc, Trie) ->
+    abbreviate(Headword, Rest2, Acc2, Trie);
+abbreviate(Headword, [FirstPart|Rest], Acc, Trie) ->
     % If we encounter a non-token, it has already been parsed by a previous
     % pass.
-    parse_token_parts(Rest, [FirstPart|Acc], Trie);
-parse_token_parts([], Acc, _) -> lists:sort(Acc).
+    abbreviate(Headword, Rest, [FirstPart|Acc], Trie);
+abbreviate(_, [], Acc, _) -> lists:sort(Acc).
+
 %% Asynchronous, possible return values
 % {noreply,NewState}
 % {noreply,NewState,Timeout}
 % {noreply,NewState,hibernate}
 % {stop,Reason,NewState}
 %% normal termination clause
-handle_cast(shutdown, State) ->
-    io:format("Generic cast handler: *shutdown* while in '~p'~n",[State]),
-    {stop, normal, State};
+handle_cast(shutdown, State) -> {stop, normal, State};
 %% generic async handler
-handle_cast(Message, State) ->
-    io:format("Generic cast handler: '~p' while in '~p'~n",[Message, State]),
-    {noreply, State}.
+handle_cast(_, State) -> {noreply, State}.
 
 %% Informative calls
 % {noreply,NewState}
 % {noreply,NewState,Timeout}
 % {noreply,NewState,hibernate}
 % {stop,Reason,NewState}
-handle_info(_Message, _Server) ->
-    io:format("Generic info handler: '~p' '~p'~n",[_Message, _Server]),
-    {noreply, _Server}.
+handle_info(_Message, Server) -> {noreply, Server}.
 
 %% Server termination
-terminate(_Reason, _Server) ->
-    io:format("Generic termination handler: '~p' '~p'~n",[_Reason, _Server]).
-
+terminate(_Reason, _Server) -> ok.
 
 %% Code change
-code_change(_OldVersion, _Server, _Extra) -> {ok, _Server}.
+code_change(_OldVersion, Server, _Extra) -> {ok, Server}.

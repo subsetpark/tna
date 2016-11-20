@@ -1,4 +1,4 @@
 [{<<"trie">>,
-  {git,"git://github.com/okeuday/trie.git",
+  {git,"https://github.com/okeuday/trie.git",
        {ref,"08b6bfe961eee5ad7f46beca6767bb63d1311656"}},
   0}].

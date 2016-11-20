@@ -47,6 +47,7 @@
   ,ically
   ,ion
   ,ious
+  ,ing
   ,le
   ,less
   ,ly
@@ -71,7 +72,8 @@
  ]}.
 {inter,
  [
-  er,
-  ch,
-  sh
+  ch
+  ,er
+  ,qu
+  ,sh
  ]}.
