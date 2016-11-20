@@ -1,32 +1,36 @@
-{init, [s]}.
+{suffix_transform, 
+ [
+  '\'s'
+ ]}.
 {word, 
  [
-  the,
-  about,
-  with,
-  always,
-  what,
-  where,
-  'when',
-  why,
-  well,
-  were,
-  was,
-  how,
-  your,
-  you,
-  this,
-  that,
-  these,
-  those,
-  their,
-  they,
-  then,
-  them,
-  though,
-  to,
-  the,
-  one
+  'when'
+  ,about
+  ,always
+  ,how
+  ,one
+  ,that
+  ,the
+  ,the
+  ,their
+  ,them
+  ,then
+  ,these
+  ,they
+  ,this
+  ,those
+  ,though
+  ,to
+  ,was
+  ,well
+  ,were
+  ,what
+  ,where
+  ,why
+  ,will
+  ,with
+  ,you
+  ,your
  ]}.
 {voc, 
  [
@@ -34,24 +38,36 @@
  ]}.
 {suffix,
  [
-  tion,
-  ion,
-  ness,
-  ous,
-  ious
+  al
+  ,ally
+  ,ial
+  ,ially
+  ,ic
+  ,ical
+  ,ically
+  ,ion
+  ,ious
+  ,le
+  ,less
+  ,ly
+  ,ness
+  ,ness
+  ,ous
+  ,tion
+  ,y
  ]}.
 {prefix,
  [
-  ad,
-  im,
-  in,
-  con,
-  com,
-  sub,
-  ob,
-  de,
-  be,
-  dis
+  ad
+  ,be
+  ,com
+  ,con
+  ,de
+  ,dis
+  ,im
+  ,in
+  ,ob
+  ,sub
  ]}.
 {inter,
  [

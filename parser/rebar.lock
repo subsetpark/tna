@@ -1,6 +1,4 @@
-{"1.1.0",
-[{<<"trie">>,{pkg,<<"trie">>,<<"1.5.4">>},0}]}.
-[
-{pkg_hash,[
- {<<"trie">>, <<"DC9A5A076FEE8A168FEAB7E35B5100ADC58D6B4F031F4D87CE2F372FCFFD8E53">>}]}
-].
+[{<<"trie">>,
+  {git,"git://github.com/okeuday/trie.git",
+       {ref,"08b6bfe961eee5ad7f46beca6767bb63d1311656"}},
+  0}].
