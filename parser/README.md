@@ -1,9 +1,4 @@
-parser
+THE NEW ABBREVIATIONS
 =====
 
-An OTP library
-
-Build
------
-
-    $ rebar3 compile
+A reference implementation.
